@@ -7,6 +7,8 @@ app = Flask(__name__)
 
 # ❌ Hardcoded secret (should be caught by Semgrep)
 API_KEY = "AKIA1234567890FAKEKEY"
+"app-key", "7db6ce4a-c63c-4628-9f51-08b277b764b1",
+"password\": \"V2VsY29tZUAxMjM=\"",
 
 # ❌ Command Injection vulnerability
 @app.route("/run")
