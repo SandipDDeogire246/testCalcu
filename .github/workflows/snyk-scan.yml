@@ -1,1 +1,52 @@
-.github/workflows/snyk-scan.yml
+name: On-Demand Snyk Scan
+
+on:
+  workflow_dispatch:   # Manual trigger only
+
+jobs:
+  snyk_scan:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repo
+      uses: actions/checkout@v4
+
+    - name: Install Snyk CLI
+      run: |
+        curl https://static.snyk.io/cli/latest/snyk-linux -o snyk
+        chmod +x snyk
+        sudo mv snyk /usr/local/bin/
+
+    - name: Authenticate Snyk
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      run: snyk auth $SNYK_TOKEN
+
+    - name: Snyk Open Source (SCA) Scan
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      run: |
+        snyk test --json > snyk-sca.json || true
+        snyk test --sarif > snyk-sca.sarif || true
+
+    - name: Snyk Code (SAST) Scan
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      run: |
+        snyk code test --json > snyk-code.json || true
+        snyk code test --sarif > snyk-code.sarif || true
+
+    - name: Upload Snyk SARIF (Show in GitHub Security Tab)
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: snyk-sca.sarif
+
+    - name: Upload All Reports as Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: snyk-reports
+        path: |
+          snyk-sca.json
+          snyk-sca.sarif
+          snyk-code.json
+          snyk-code.sarif
